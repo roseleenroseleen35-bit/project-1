@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> <!-- Corrected from UTF-m -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HugMaker - Gemini Powered</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* --- Animated Iridescent Wave Background --- */
+        @keyframes bounceWave {
+            0%, 100% {
+                transform: translate(-10%, -10%) rotate(-10deg) scale(1.0);
+            }
+            50% {
+                transform: translate(10%, 10%) rotate(10deg) scale(1.2);
+            }
+        }
+
+        @keyframes bounceWave2 {
+            0%, 100% {
+                transform: translate(10%, 10%) rotate(10deg) scale(1.0);
+            }
+            50% {
+                transform: translate(-10%, -10%) rotate(-10deg) scale(1.1);
+            } 
+        }
+
+        .wave-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -10;
+            overflow: hidden;
+            background: linear-gradient(120deg, #e0f2fe 0%, #d1e5fa 50%, #e8f0ff 100%);
+        }
+
+        .wave-blob1 {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 80vw;
+            height: 80vw;
+            max-width: 800px;
+            max-height: 800px;
+            background: linear-gradient(145deg, rgba(129, 140, 248, 0.7) 0%, rgba(167, 139, 250, 0.5) 100%); 
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            animation: bounceWave 20s ease-in-out infinite alternate;
+            filter: blur(80px);
+            opacity: 0.8;
+        }
+
+        .wave-blob2 {
+            position: absolute;
+            bottom: 10%;
+            right: 10%;
+            width: 70vw;
+            height: 70vw;
+            max-width: 700px;
+            max-height: 700px;
+            background: linear-gradient(145deg, rgba(139, 92, 246, 0.6) 0%, rgba(217, 119, 6, 0.4) 100%);
+            border-radius: 70% 30% 40% 60% / 50% 60% 40% 50%;
+            animation: bounceWave2 25s ease-in-out infinite alternate;
+            filter: blur(90px);
+            opacity: 0.7;
+        }
+        /* --- End Background --- */
+        
+        /* Frost effect for nav and cards */
+        .frosted-glass {
+           background-color: rgba(240, 240, 240, 0.6); /* Grey-white frost - MORE TRANSPARENT */
+           backdrop-filter: blur(16px); /* Increased blur for softer effect */
+           -webkit-backdrop-filter: blur(16px); 
+           box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+           border-radius: 1rem; /* UPDATED: Increased rounding for all frosted elements */
+        }
+
+        /* --- Sound Wave Graphic --- */
+        .sound-wave-graphic {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px; /* UPDATED: Was 120px. Now matches SVG height. */
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .sound-wave-graphic svg {
+            position: absolute;
+            bottom: 0; /* UPDATED: Was -20px. Aligns SVG bottom with container bottom. */
+            width: 100%; /* This is overridden by inline style, but good default */
+            height: 100px; /* UPDATED: Explicitly set height to match viewBox */
+            fill: #9ca3af; /* Darker grey for wave */
+            opacity: 0.9; /* Slightly more opaque */
+            filter: url(#grain); /* Apply the grain filter */
+        }
+
+        @keyframes waveMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .wave-path-animated {
+            animation: waveMove 15s linear infinite;
+        }
+        /* --- End Sound Wave --- */
+
+        /* --- Privacy Popup --- */
+        .privacy-popup {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 90%;
+            max-width: 400px;
+            height: 50vh;
+            max-height: 400px;
+            border-radius: 0.5rem; /* rounded-lg */
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .privacy-popup.active {
+            display: flex;
+        }
+        .privacy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .privacy-header h4 {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .privacy-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem; 
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .privacy-content {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .privacy-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        /* --- End Privacy Popup --- */
+
+        /* --- Custom Loader --- */
+        .loader {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            border-top: 2px solid #FFF;
+            border-right: 2px solid transparent;
+            box-sizing: border-box;
+            animation: rotation 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen">
+
+    <!-- SVG Filter for Grain Effect -->
+    <svg width="0" height="0" style="position:absolute;">
+        <defs>
+            <filter id="grain" x="0" y="0" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Animated Wave Background -->
+    <div class="wave-bg">
+        <div class="wave-blob1"></div>
+        <div class="wave-blob2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-50 frosted-glass">
+        <div class="container mx-auto max-w-6xl px-4 py-4 flex justify-between items-center">
+            <!-- Logo / Home Button -->
+            <div class="flex items-center gap-2 cursor-pointer focus:outline-none" role="button" tabindex="0" aria-label="Home" onclick="window.scrollTo(0,0);">
+                <svg class="h-8 w-8 text-pink-600" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="hugGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#f472b6"/>
+                            <stop offset="100%" stop-color="#8b5cf6"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Two abstract hugging shapes forming a heart-like mark -->
+                    <path d="M20 26c0-6 4.5-10 10-10s10 4 10 10" stroke="url(#hugGrad)" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M16 30c0 10 10 16 16 22c6-6 16-12 16-22" stroke="url(#hugGrad)" stroke-width="6" stroke-linecap="round"/>
+                    <circle cx="24" cy="22" r="3" fill="#f472b6"/>
+                    <circle cx="40" cy="22" r="3" fill="#8b5cf6"/>
+                </svg>
+                <span class="text-2xl font-bold">
+                    <span class="text-indigo-600">Hug</span><span class="text-pink-600">Maker</span>
+                </span>
+            </div>
+            <!-- Auth Buttons Removed -->
+        </div>
+    </nav>
+
+
+    <!-- Main Content Area -->
+    <main class="container mx-auto max-w-6xl p-4 py-8 md:py-12 min-h-[80vh]">
+
+        <!-- ============================================= -->
+        <!-- == LANDING PAGE == -->
+        <!-- ============================================= -->
+        <div id="page-landing" class="page active space-y-8">
+            <div class="text-center p-12 frosted-glass rounded-lg shadow-lg">
+                <h1 class="text-5xl font-bold text-slate-900 mb-4">Make two photos hug.</h1>
+                <p class="text-xl text-slate-600 max-w-3xl mx-auto mb-6">
+                    Upload two face photos and get a cute, shareable hug image. Gemini suggests layout; we never store your uploads.
+                </p>
+                <div class="space-x-4">
+                    <!-- This button now reveals the card below -->
+                    <button id="try-it-now-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-indigo-700 transition-all">
+                        Try it now
+                    </button>
+                    <!-- How it works button can scroll to video -->
+                     <button id="how-it-works-btn" class="bg-slate-100 text-slate-700 px-8 py-3 rounded-full text-lg font-semibold hover:bg-slate-200 transition-all">
+                        How it works
+                    </button>
+                </div>
+            </div>
+
+            <!-- Video Showcase Section -->
+            <div id="video-section" class="frosted-glass rounded-lg shadow-lg overflow-hidden">
+                <div class="p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4 text-center">See How It Works</h2>
+                </div>
+                <!-- YouTube Video Embed -->
+                <div class="aspect-video w-full">
+                    <iframe
+                        class="w-full h-full"
+                        src="https://www.youtube.com/embed/LXGhiNHpe2w" <!-- Placeholder video -->
+                        title="HugMaker Project Trailer" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            </div>
+            <!-- END: Video Showcase Section -->
+
+            <!-- Gemini Hug Composer -->
+            <!-- This card is hidden by default -->
+            <div id="hug-composer-card" class="frosted-glass rounded-lg shadow-lg p-6 hidden">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4 text-center">Make Two Photos Hug (Gemini-assisted)</h2>
+                <p class="text-slate-600 text-center mb-6">Upload two face photos. We’ll compose a cute hug image. No photos are stored.</p>
+                <form id="hug-form" class="grid md:grid-cols-2 gap-4 items-start">
+                    <div>
+                        <label for="hug-image1" class="block text-sm font-medium text-slate-700 mb-2">Image 1</label>
+                        <input id="hug-image1" type="file" accept="image/*" class="w-full block rounded-lg border border-slate-300 bg-white p-2 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" required>
+                    </div>
+                    <div>
+                        <label for="hug-image2" class="block text-sm font-medium text-slate-700 mb-2">Image 2</label>
+                        <input id="hug-image2" type="file" accept="image/*" class="w-full block rounded-lg border border-slate-300 bg-white p-2 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer" required>
+                    </div>
+                    <div class="md:col-span-2 flex items-center justify-center gap-3 mt-2">
+                        <button id="hug-submit" type="submit" class="bg-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-pink-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all flex items-center justify-center min-w-[170px]">
+                            Make them hug
+                        </button>
+                        <span id="hug-status" class="text-slate-500"></span>
+                    </div>
+                </form>
+                <div id="hug-result" class="mt-6 hidden">
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3 text-center">Result</h3>
+                    <img id="hug-output" alt="Hug result" class="rounded-xl shadow-md max-w-full mx-auto" />
+                    <div class="mt-3 text-center">
+                        <a id="hug-download" href="#" download="hug-image.png" class="text-indigo-600 hover:underline">Download image</a>
+                    </div>
+                </div>
+            </div>
+            <!-- END: Gemini Hug Composer -->
+
+            <!-- NEW: Features Section -->
+            <div class="grid md:grid-cols-3 gap-6 space-y-6 md:space-y-0">
+                <!-- Feature 1 -->
+                <div class="frosted-glass rounded-lg shadow-lg p-6 text-center">
+                    <div class="rounded-lg mb-4 w-full h-auto aspect-square bg-gradient-to-br from-sky-50 to-blue-100 p-8 flex items-center justify-center text-blue-600">
+                        <svg class="w-3/5 h-3/5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
+                            <g stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M19.014 11.085v4.992m-4.992-4.992v.001M19.014 11.085h-4.992m4.992 0v.001M16.023 9.348v4.992m0 0h4.992" opacity="0.6"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">AI-guided layout</h3>
+                    <p class="text-slate-600">Gemini suggests smart face positions for a natural-looking hug.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="frosted-glass rounded-lg shadow-lg p-6 text-center">
+                    <div class="rounded-lg mb-4 w-full h-auto aspect-square bg-gradient-to-br from-purple-50 to-indigo-100 p-8 flex items-center justify-center text-indigo-600">
+                        <svg class="w-3/5 h-3/5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
+                            <g stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18M3 12h18M3 18h18" />
+                                <rect x="8" y="4" width="3" height="4" rx="1.5" fill="white" stroke-width="2"/>
+                                <rect x="13" y="10" width="3" height="4" rx="1.5" fill="white" stroke-width="2"/>
+                                <rect x="8" y="16" width="3" height="4" rx="1.5" fill="white" stroke-width="2"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Private by default</h3>
+                    <p class="text-slate-600">Uploads are processed and cleaned up—no photo storage on our servers.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="frosted-glass rounded-lg shadow-lg p-6 text-center">
+                    <div class="rounded-lg mb-4 w-full h-auto aspect-square bg-gradient-to-br from-emerald-50 to-teal-100 p-8 flex items-center justify-center text-teal-600">
+                        <svg class="w-3/5 h-3/5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
+                            <g stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Lightning Bolt -->
+                                <path d="M13.5 4.5L10.5 12h3l-3 7.5" />
+                                <!-- Shield -->
+                                <path d="M12 21.75c3.5 0 6.25-2.25 6.25-5.625V8.25c0-1-.375-1.875-1-2.625L12 3 6.75 5.625c-.625.75-1 1.625-1 2.625v7.875C5.75 19.5 8.5 21.75 12 21.75z" />
+                            </g>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Fast results</h3>
+                    <p class="text-slate-600">Get a polished 1024×1024 PNG in seconds, ready to share.</p>
+                </div>
+            </div>
+            <!-- END: Features Section -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="frosted-glass relative overflow-hidden mt-16">
+        <div class="container mx-auto max-w-6xl p-4 py-12 md:py-16 text-center">
+            <h2 class="text-4xl font-bold text-slate-900 mb-4 z-10 relative">Ready to create a photo hug?</h2>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto mb-8 z-10 relative">
+                Upload two photos and get a cute, shareable hug image in seconds.
+            </p>
+            <div class="space-x-4 z-10 relative">
+                <button class="bg-indigo-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-indigo-700" onclick="document.getElementById('try-it-now-btn').click(); document.getElementById('hug-composer-card').scrollIntoView({ behavior: 'smooth' });">
+                    Get Started Now
+                </button>
+            </div>
+        </div>
+        
+        <!-- Sound Wave Graphic -->
+        <div class="sound-wave-graphic">
+            <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="width: 200%;" aria-hidden="true">
+                <path class="wave-path-animated" d="M0,50 C150,100 350,0 500,50 C650,100 850,0 1000,50 L1000,100 L0,100 Z"></path>
+                <path class="wave-path-animated" d="M0,40 C150,90 350,-10 500,40 C650,90 850,-10 1000,40 L1000,100 L0,100 Z" transform="translate(500, 0)" opacity="0.8"></path>
+            </svg>
+        </div>
+
+        <!-- Sub-Footer -->
+        <div class="container mx-auto max-w-6xl p-4 z-10 relative">
+             <div class="border-t border-slate-200 pt-6 pb-6 text-center text-slate-500 text-sm"> 
+                 HugMaker © 2025 | A prototype focused on privacy.
+                 <br>
+                 <button id="open-privacy-btn" class="font-medium text-indigo-600 hover:underline mt-2">
+                   Privacy and Security
+                 </button>
+             </div>
+        </div>
+    </footer>
+
+    <!-- Privacy Popup -->
+    <div id="privacy-popup" class="privacy-popup frosted-glass">
+        <div class="privacy-header">
+            <h4>Privacy & Security Guidelines</h4>
+            <button id="close-privacy-btn" class="privacy-close-btn">&times;</button>
+        </div>
+        <div class="privacy-content">
+            <iframe id="privacy-iframe" title="Privacy and Security Guidelines"></iframe>
+        </div>
+    </div>
+
+    <!-- Main Application Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        /**
+         * Asynchronous function to fetch with exponential backoff retry.
+         * This helps handle API rate limits or temporary network issues.
+         * @param {string} url - The API URL to fetch.
+         * @param {object} options - The options for the fetch request (method, headers, body).
+         * @param {number} maxRetries - Maximum number of retries.
+         * @returns {Promise<Response>} - The fetch response.
+         */
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return response;
+                    }
+                    // Don't retry on client errors (4xx), but do on server errors (5xx)
+                    if (response.status >= 400 && response.status < 500) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error?.message || `Client error: ${response.status} ${response.statusText}`);
+                    }
+                    // For 5xx errors, wait and retry
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+
+                } catch (error) {
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        throw error; // All retries failed
+                    }
+                    const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                    // Do not log retry attempts to the console as errors
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        /**
+        * Initializes the "Try it now" button to reveal and scroll to the composer
+        */
+        function initScrollButtons() {
+            const tryItNowBtn = document.getElementById('try-it-now-btn');
+            const howItWorksBtn = document.getElementById('how-it-works-btn');
+            const hugCard = document.getElementById('hug-composer-card');
+            const videoSection = document.getElementById('video-section');
+
+            if (tryItNowBtn && hugCard) {
+                tryItNowBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    hugCard.classList.remove('hidden');
+                    hugCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }
+
+            if (howItWorksBtn && videoSection) {
+                howItWorksBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    videoSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }
+        }
+
+        /**
+        * Handles the privacy popup
+        */
+        function initPrivacyPopup() {
+            const openBtn = document.getElementById('open-privacy-btn');
+            const closeBtn = document.getElementById('close-privacy-btn');
+            const popup = document.getElementById('privacy-popup');
+            const iframe = document.getElementById('privacy-iframe');
+            if (!openBtn || !closeBtn || !popup || !iframe) return;
+            const privacyHtmlContent = `
+                <style>
+                    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; padding: 1rem; color: #334155; line-height: 1.6; margin: 0;}
+                    h5 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; margin-top: 0;}
+                    ul { padding-left: 1.25rem; margin-bottom: 1rem; }
+                    li { margin-bottom: 0.5rem; }
+                </style>
+                <body>
+                    <h5>Privacy & Security for Photo Hugs</h5>
+                    <p>We designed this feature to be private by default. Here is how we protect you:</p>
+                    <ul>
+                        <li><strong>No Photo Storage:</strong> Images are processed to generate your hug and then deleted.</li>
+                        <li><strong>Encrypted in Transit:</strong> Your uploads travel over HTTPS. We do not sell or share your images.</li>
+                        <li><strong>No Training Use:</strong> We do not use your photos to train any models. Gemini is only queried for layout suggestions.</li>
+                        <li><strong>User Control:</strong> You decide what to download and keep. We do not keep copies.</li>
+                        <li><strong>Abuse Prevention:</strong> Content may be checked for obvious policy violations; abusive content can be blocked.</li>
+                    </ul>
+                </body>`;
+            iframe.srcdoc = privacyHtmlContent;
+            openBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                popup.classList.add('active');
+            });
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                popup.classList.remove('active');
+            });
+        }
+
+        /**
+         * Reads an image file and converts it to a Base64 encoded generative part
+         * @param {File} file - The image file to convert
+         * @returns {Promise<object>} - A promise that resolves with the generative part
+         */
+        /**
+        * Handles the main hug generation form
+        */
+        function initHugComposer(){
+            const form = document.getElementById('hug-form');
+            if (!form) return;
+            const img1 = document.getElementById('hug-image1');
+            const img2 = document.getElementById('hug-image2');
+            const submit = document.getElementById('hug-submit');
+            const statusEl = document.getElementById('hug-status');
+            const resultWrap = document.getElementById('hug-result');
+            const outputImg = document.getElementById('hug-output');
+            const downloadLink = document.getElementById('hug-download');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const f1 = img1.files && img1.files[0];
+                const f2 = img2.files && img2.files[0];
+                if (!f1 || !f2) {
+                    statusEl.textContent = 'Please upload two images.';
+                    return;
+                }
+                
+                // --- Show loading state ---
+                submit.disabled = true;
+                submit.innerHTML = `<span class="loader"></span>Making hug...`; // Use innerHTML for loader
+                statusEl.textContent = 'Preparing images...';
+                resultWrap.classList.add('hidden');
+                outputImg.removeAttribute('src');
+                downloadLink.removeAttribute('href');
+                
+                try {
+                    // --- UPDATED LOGIC: Use FormData to send files to the backend ---
+
+                    // 1. Create FormData and append files
+                    const fd = new FormData();
+                    fd.append('image1', f1);
+                    fd.append('image2', f2);
+                    
+                    statusEl.textContent = 'Generating image...';
+
+                    // 2. Define the base URL for the backend
+                    // This points to port 3000 to match your server.js file
+                    const API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+                        ? 'http://localhost:3001' 
+                        : ''; // Use relative path for production (if hosted on same domain)
+
+                    // 3. Set up fetch options
+                    const fetchOptions = {
+                        method: 'POST',
+                        body: fd,
+                        // DO NOT set 'Content-Type' header.
+                        // The browser will automatically set it to 'multipart/form-data'
+                        // with the correct boundary when using FormData.
+                    };
+                    
+                    // 4. Call our backend API, not the Google API directly
+                    const resp = await fetchWithRetry(`${API_BASE_URL}/api/hug`, fetchOptions);
+                    const result = await resp.json();
+                    
+                    // 5. Check for errors from our server
+                    if (!resp.ok || result.error) {
+                        throw new Error(result.error || 'The model did not return an image. Please try again.');
+                    }
+                    
+                    // 6. The backend sends back a JSON with the final data URL
+                    if (!result.imageUrl) {
+                        throw new Error('Server did not return an image URL.');
+                    }
+                    
+                    // 7. Display the result
+                    const imageUrl = result.imageUrl;
+                    
+                    outputImg.src = imageUrl;
+                    downloadLink.href = imageUrl;
+                    resultWrap.classList.remove('hidden');
+                    statusEl.textContent = 'Your hug image is ready!';
+                    
+                } catch (err) {
+                    console.error('Hug generation failed:', err);
+                    statusEl.textContent = 'Error: ' + (err && err.message ? err.message : 'Unknown error');
+                } finally {
+                    // --- Reset button from loading state ---
+                    submit.disabled = false;
+                    submit.innerHTML = 'Make them hug'; // Reset button text
+                }
+            });
+        }
+
+        // --- Initialize all parts of the app ---
+        initScrollButtons();
+        initPrivacyPopup();
+        initHugComposer();
+
+    });
+    </script>
+</body>
+</html>
